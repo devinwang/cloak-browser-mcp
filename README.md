@@ -159,7 +159,7 @@ The agent will call `browser_navigate` → `browser_snapshot` → `browser_click
 |---|---|---|---|
 | `--caps <csv>` | `all` or any subset | (none) | Enables capability-gated tools |
 | `--profile-dir <path>` | Absolute path | (ephemeral) | Persistent user-data dir |
-| `--headless` / `--headed` | (boolean) | headless | |
+| `--headless` / `--headed` | (boolean) | **headed (visible)** | Pass `--headless` for batch/CI runs. |
 | `--proxy <url>` | http(s)/socks5 with inline auth | none | |
 | `--timezone <tz>` | IANA tz | system | e.g. `America/New_York` |
 | `--locale <bcp47>` | BCP-47 | system | e.g. `en-US` |
@@ -481,6 +481,10 @@ For issues in upstream CloakBrowser: https://github.com/CloakHQ/CloakBrowser/sec
 ---
 
 ## Changelog
+
+### [0.1.1] - 2026-05-24
+
+- **BREAKING (UX)**: default is now **headed (visible browser)** instead of headless. An interactive MCP server should let the user watch the agent work. Pass `--headless` explicitly for batch/CI usage. Smithery default flipped to match.
 
 ### [0.1.0] - 2026-05-24
 

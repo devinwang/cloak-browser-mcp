@@ -51,7 +51,7 @@ function parseCaps(raw: string): Set<Capability> {
 export function parseArgs(argv: string[]): ServerConfig {
   const cfg: ServerConfig = {
     caps: new Set(),
-    headless: true,
+    headless: false,
     geoip: false,
     humanize: false,
     allowedDomains: [],
@@ -166,7 +166,7 @@ Usage: cloak-browser-mcp [flags]
 Flags:
   --caps <list>              Capability list: all,vision,pdf,devtools,network,storage,config,testing,humanize
   --profile-dir <path>       Persistent user-data dir (omit for ephemeral)
-  --headless | --headed      Default headless
+  --headless | --headed      Default: headed (visible). Pass --headless for batch/CI.
   --proxy <url>              http(s)/socks5 URL with optional inline auth
   --timezone <tz>            IANA timezone (e.g. America/New_York)
   --locale <bcp47>           BCP-47 locale (e.g. en-US)

@@ -11,7 +11,7 @@ startCommand:
         description: Persistent user-data directory. Omit for ephemeral session.
       headless:
         type: boolean
-        default: true
+        default: false
       proxy:
         type: string
         description: HTTP/SOCKS5 proxy URL with optional inline auth (http://user:pass@host:port).
@@ -51,7 +51,7 @@ startCommand:
       const args = [];
       if (config.caps) args.push('--caps', config.caps);
       if (config.profileDir) args.push('--profile-dir', config.profileDir);
-      if (config.headless === false) args.push('--headed');
+      if (config.headless === true) args.push('--headless');
       if (config.proxy) args.push('--proxy', config.proxy);
       if (config.timezone) args.push('--timezone', config.timezone);
       if (config.locale) args.push('--locale', config.locale);
