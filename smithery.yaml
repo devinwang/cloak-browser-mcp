@@ -1,0 +1,69 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      caps:
+        type: string
+        description: Comma-separated capability list (vision, pdf, devtools, network, storage, config, testing, humanize) or "all".
+      profileDir:
+        type: string
+        description: Persistent user-data directory. Omit for ephemeral session.
+      headless:
+        type: boolean
+        default: true
+      proxy:
+        type: string
+        description: HTTP/SOCKS5 proxy URL with optional inline auth (http://user:pass@host:port).
+      timezone:
+        type: string
+        description: IANA timezone override (e.g., America/New_York).
+      locale:
+        type: string
+        description: BCP-47 locale (e.g., en-US).
+      userAgent:
+        type: string
+      viewport:
+        type: string
+        description: WIDTHxHEIGHT (e.g., 1920x1080).
+      geoip:
+        type: boolean
+        default: false
+        description: Auto-resolve geolocation/timezone/locale from proxy exit IP.
+      humanize:
+        type: boolean
+        default: false
+      fingerprintSeed:
+        type: integer
+        description: Deterministic fingerprint seed.
+      allowedDomains:
+        type: string
+        description: Comma-separated allow-list for browser_navigate.
+      blockedDomains:
+        type: string
+        description: Comma-separated block-list for browser_navigate.
+      enableUnsafeEval:
+        type: boolean
+        default: false
+        description: Required (in addition to caps=config) to enable browser_run_code_unsafe.
+  commandFunction: |
+    (config) => {
+      const args = [];
+      if (config.caps) args.push('--caps', config.caps);
+      if (config.profileDir) args.push('--profile-dir', config.profileDir);
+      if (config.headless === false) args.push('--headed');
+      if (config.proxy) args.push('--proxy', config.proxy);
+      if (config.timezone) args.push('--timezone', config.timezone);
+      if (config.locale) args.push('--locale', config.locale);
+      if (config.userAgent) args.push('--user-agent', config.userAgent);
+      if (config.viewport) args.push('--viewport', config.viewport);
+      if (config.geoip) args.push('--geoip');
+      if (config.humanize) args.push('--humanize');
+      if (config.fingerprintSeed != null) args.push('--fingerprint-seed', String(config.fingerprintSeed));
+      if (config.allowedDomains) args.push('--allowed-domains', config.allowedDomains);
+      if (config.blockedDomains) args.push('--blocked-domains', config.blockedDomains);
+      if (config.enableUnsafeEval) args.push('--enable-unsafe-eval');
+      return { command: 'cloak-browser-mcp', args };
+    }
+build:
+  dockerfile: Dockerfile

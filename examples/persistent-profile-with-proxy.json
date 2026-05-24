@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "cloak-browser": {
+      "command": "cloak-browser-mcp",
+      "args": [
+        "--caps", "all",
+        "--profile-dir", "/Users/me/.cloak-browser-mcp/profiles/work",
+        "--proxy", "http://user:pass@proxy.example.com:8080",
+        "--timezone", "Europe/London",
+        "--locale", "en-GB",
+        "--geoip",
+        "--humanize",
+        "--viewport", "1920x1080",
+        "--allowed-domains", "*.example.com,*.cloudflare.com",
+        "--max-pages", "10"
+      ]
+    }
+  }
+}

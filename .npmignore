@@ -1,0 +1,13 @@
+src/
+node_modules/
+tsconfig.json
+.gitignore
+.npmignore
+scripts/
+examples/
+smithery.yaml
+.github/
+*.log
+.DS_Store
+.env*
+coverage/

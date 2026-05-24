@@ -1,0 +1,79 @@
+{
+  "name": "cloak-browser-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol (MCP) server backed by CloakBrowser stealth Chromium. Drop-in replacement for @playwright/mcp with source-level fingerprint patches, humanized inputs, and persistent profiles. 80 tools across navigation, interaction, page state, network, storage, vision, PDF, testing, devtools, and CloakBrowser-exclusive stealth/profile management. Works with Claude Code, Cursor, VS Code, Codex, Gemini CLI, Windsurf, or any MCP client.",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "cloakbrowser",
+    "cloak-browser",
+    "stealth-browser",
+    "stealth-chromium",
+    "anti-detection",
+    "anti-bot",
+    "browser-automation",
+    "fingerprint",
+    "playwright",
+    "playwright-mcp",
+    "chromium",
+    "headless-browser",
+    "scraping",
+    "web-automation",
+    "agent-browser",
+    "claude",
+    "cursor",
+    "vscode",
+    "codex",
+    "gemini-cli",
+    "windsurf",
+    "agentic",
+    "ai-assistant",
+    "automation",
+    "ai"
+  ],
+  "homepage": "https://github.com/devinwang/cloak-browser-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devinwang/cloak-browser-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/devinwang/cloak-browser-mcp/issues"
+  },
+  "license": "MIT",
+  "author": "Devin Wang",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "cloak-browser-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "postbuild": "chmod +x dist/index.js",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "smoke": "node dist/index.js --self-test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "cloakbrowser": "^0.3.0",
+    "playwright-core": "^1.49.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}

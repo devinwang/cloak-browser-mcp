@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "cloak-browser": {
+      "command": "cloak-browser-mcp",
+      "args": ["--caps", "all"]
+    }
+  }
+}

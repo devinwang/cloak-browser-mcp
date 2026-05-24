@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "cloak-browser": {
+      "command": "cloak-browser-mcp",
+      "args": [
+        "--caps", "network,storage,pdf",
+        "--profile-dir", "/Users/me/.cloak-browser-mcp/profiles/scoped",
+        "--allowed-domains", "*.target.com",
+        "--upload-allow-dir", "/tmp/cloak-uploads",
+        "--max-pages", "5"
+      ]
+    }
+  }
+}

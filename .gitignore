@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+coverage/
+.nyc_output/
+.cloakbrowser/
+.npm-debug.log
+package-lock.json.bak
