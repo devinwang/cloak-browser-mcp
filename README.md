@@ -48,14 +48,16 @@ When you don't need stealth, `@playwright/mcp` is faster and lighter — use tha
 The wrapper installs from npm; the CloakBrowser Chromium binary (~200 MB) downloads on first use into `~/.cloakbrowser/`.
 
 ```bash
-npm install -g cloak-browser-mcp
+npm install -g @devinwangd/cloak-browser-mcp
 ```
 
 Or run on demand without installing:
 
 ```bash
-npx cloak-browser-mcp --caps all
+npx @devinwangd/cloak-browser-mcp --caps all
 ```
+
+After install, the binary on `PATH` is `cloak-browser-mcp` (unscoped) — that's what you reference in MCP client configs below.
 
 ### 2. Wire into your MCP client
 
