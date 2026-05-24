@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Verify no secrets in build output
+        run: |
+          # Common live-secret shapes that should never reach dist/.
+          if grep -rEnI \
+              -e 'AKIA[0-9A-Z]{16}' \
+              -e 'ghp_[0-9A-Za-z]{36}' \
+              -e 'sk_live_[0-9A-Za-z]{24,}' \
+              -e 'sk_test_[0-9A-Za-z]{24,}' \
+              -e 'xox[abprs]-[0-9A-Za-z-]{10,}' \
+              -e 'mongodb\+srv://[^[:space:]]+:[^[:space:]@<]+@' \
+              -e '-----BEGIN (RSA |EC |OPENSSH |PGP )?PRIVATE KEY' \
+              -e 'eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}' \
+              dist/ 2>/dev/null; then
+            echo "::error::Secret-shaped string found in dist/"
+            exit 1
+          fi
+      - name: Verify CLI smoke test
+        run: node dist/index.js --caps all --self-test | tail -3

@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write # required for npm provenance (sigstore)
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: "npm"
+          registry-url: "https://registry.npmjs.org"
+
+      - run: npm ci
+
+      - name: Verify tag matches package.json version
+        run: |
+          tag="${GITHUB_REF#refs/tags/v}"
+          pkgver=$(node -p "require('./package.json').version")
+          if [ "$tag" != "$pkgver" ]; then
+            echo "::error::Tag v$tag does not match package.json version $pkgver"
+            exit 1
+          fi
+
+      - run: npm run typecheck
+      - run: npm run build
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --provenance
+
+      - name: Extract release notes for this version
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          version="${tag#v}"
+          # CHANGELOG sections live inside README.md (## Changelog → ### [X.Y.Z])
+          # Write to file (not workflow output) so backticks/parens never hit shell.
+          awk -v ver="$version" '
+            BEGIN { capturing=0 }
+            $0 ~ "^### \\[" ver "\\]" { capturing=1; print; next }
+            capturing && $0 ~ "^### \\[" { capturing=0 }
+            capturing && $0 ~ "^## " { capturing=0 }
+            capturing { print }
+          ' README.md > /tmp/release-notes.md
+          if [ ! -s /tmp/release-notes.md ]; then
+            echo "Release $tag" > /tmp/release-notes.md
+          fi
+          echo "=== Release notes preview ==="
+          head -50 /tmp/release-notes.md
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" --notes-file /tmp/release-notes.md
+          else
+            gh release create "$tag" \
+              --title "$tag" \
+              --notes-file /tmp/release-notes.md \
+              --verify-tag
+          fi
