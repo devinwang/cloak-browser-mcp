@@ -484,6 +484,12 @@ For issues in upstream CloakBrowser: https://github.com/CloakHQ/CloakBrowser/sec
 
 ## Changelog
 
+### [0.1.2] - 2026-08-03
+
+- No behaviour change. Release-pipeline only: publishes via **npm trusted publishing (OIDC)** instead of an `NPM_TOKEN` secret. A long-lived token expires silently, and npm answers an unauthorized publish with `404 Not Found - PUT` — which reads like a missing package rather than an auth failure. OIDC has nothing to expire.
+- Dropped `registry-url` from `actions/setup-node`: it writes an `.npmrc` containing `_authToken=${NODE_AUTH_TOKEN}` and, with no token supplied, exports NODE_AUTH_TOKEN as the literal placeholder `XXXXX-XXXXX-XXXXX-XXXXX`, so npm authenticates with a bogus token instead of falling through to OIDC.
+- The release job pins npm to the `11.x` line before publishing — OIDC needs >= 11.5.1 and Node 22 still bundles 10.x. Provenance is automatic under trusted publishing, so the explicit `--provenance` flag is gone; attestation coverage is unchanged.
+
 ### [0.1.1] - 2026-05-24
 
 - **BREAKING (UX)**: default is now **headed (visible browser)** instead of headless. An interactive MCP server should let the user watch the agent work. Pass `--headless` explicitly for batch/CI usage. Smithery default flipped to match.
