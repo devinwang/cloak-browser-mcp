@@ -13,7 +13,33 @@ export class CapabilityNotEnabledError extends CloakError {
 
 export class NoActivePageError extends CloakError {
   constructor() {
-    super("No active page. Call browser_navigate first.", "NO_PAGE");
+    super(
+      'No active page. Open one with browser_tabs {"action":"new"}, or call browser_navigate with a url.',
+      "NO_PAGE",
+    );
+  }
+}
+
+export class BrowserNotLaunchedError extends CloakError {
+  constructor(cause?: unknown) {
+    const detail = cause instanceof Error ? cause.message : cause ? String(cause) : undefined;
+    super(
+      "Browser failed to launch, so there is no page to act on." +
+        (detail ? ` Underlying error: ${detail}` : "") +
+        " A stale CloakBrowser process may still hold the profile directory —" +
+        " check with: ps aux | grep cloakbrowser" +
+        " and terminate the parent Chromium processes, then retry.",
+      "NO_BROWSER",
+    );
+  }
+}
+
+export class TabNotFoundError extends CloakError {
+  constructor(id: string) {
+    super(
+      `Tab ${id} not found. Call browser_tabs {"action":"list"} to see open tabs.`,
+      "TAB_NOT_FOUND",
+    );
   }
 }
 

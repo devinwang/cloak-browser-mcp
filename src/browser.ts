@@ -9,7 +9,12 @@ import type {
   Route,
 } from "playwright-core";
 import { isAllowedNavigation, type ServerConfig } from "./config.js";
-import { NavigationBlockedError, NoActivePageError } from "./errors.js";
+import {
+  BrowserNotLaunchedError,
+  NavigationBlockedError,
+  NoActivePageError,
+  TabNotFoundError,
+} from "./errors.js";
 import { RefRegistry } from "./refs.js";
 
 // Late-bound to avoid loading cloakbrowser until first real call.
@@ -64,6 +69,7 @@ export class BrowserSession {
   private activeRoutes = new Map<string, RouteRule>();
   readonly refs = new RefRegistry();
   private launching?: Promise<void>;
+  private lastLaunchError?: unknown;
   private offline = false;
 
   constructor(private cfg: ServerConfig) {}
@@ -74,7 +80,15 @@ export class BrowserSession {
 
   async ensureBrowser(): Promise<void> {
     if (this.context) return;
-    if (!this.launching) this.launching = this.launchInternal();
+    if (!this.launching) {
+      // Clear the cached promise on failure so a later call can retry.
+      // Leaving a rejected promise here poisons the session permanently.
+      this.launching = this.launchInternal().catch((err) => {
+        this.launching = undefined;
+        this.lastLaunchError = err;
+        throw err;
+      });
+    }
     await this.launching;
   }
 
@@ -212,6 +226,7 @@ export class BrowserSession {
   }
 
   get activePage(): Page {
+    if (!this.context) throw new BrowserNotLaunchedError(this.lastLaunchError);
     if (!this.activeId) throw new NoActivePageError();
     const page = this.pages.get(this.activeId);
     if (!page) throw new NoActivePageError();
@@ -238,14 +253,14 @@ export class BrowserSession {
 
   setActive(id: string): Page {
     const p = this.pages.get(id);
-    if (!p) throw new NoActivePageError();
+    if (!p) throw new TabNotFoundError(id);
     this.activeId = id;
     return p;
   }
 
   async newTab(url?: string): Promise<TabInfo> {
     await this.ensureBrowser();
-    if (!this.context) throw new NoActivePageError();
+    if (!this.context) throw new BrowserNotLaunchedError(this.lastLaunchError);
     if (this.pages.size >= this.cfg.maxPages) {
       throw new Error(`Max pages (${this.cfg.maxPages}) reached. Close a tab first.`);
     }
