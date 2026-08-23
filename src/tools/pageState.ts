@@ -132,15 +132,18 @@ export const pageStateTools: ToolHandler[] = [
       const args = evaluateSchema.parse(raw);
       const page = session.activePage;
       const fnSrc = args.function;
-      const wrapped = `(${fnSrc})`;
       let result: unknown;
       if (args.target) {
         const loc = session.refs.locator(page, args.target);
         result = await loc.evaluate(new Function("__el", `return (${fnSrc})(__el)`) as Parameters<typeof loc.evaluate>[0]);
       } else {
-        result = await page.evaluate(wrapped);
+        // Must invoke the function. page.evaluate() given a string evaluates it
+        // as an expression, so `(fn)` yields the function object itself, which is
+        // not serializable and comes back as undefined.
+        result = await page.evaluate(`(${fnSrc})()`);
       }
-      return textOutput(typeof result === "string" ? result : JSON.stringify(result, null, 2));
+      if (result === undefined) return textOutput("undefined");
+      return textOutput(typeof result === "string" ? result : JSON.stringify(result, null, 2) ?? "undefined");
     },
   },
 ];
