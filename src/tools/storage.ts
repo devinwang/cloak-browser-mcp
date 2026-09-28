@@ -268,12 +268,31 @@ export const storageTools: ToolHandler[] = [
       if (Array.isArray(json.cookies)) await ctx.addCookies(json.cookies);
       if (Array.isArray(json.origins)) {
         for (const o of json.origins) {
-          const page = await ctx.newPage();
-          await page.goto(o.origin);
-          for (const item of o.localStorage ?? []) {
-            await page.evaluate(({ name, value }) => localStorage.setItem(name, value), item);
+          try {
+            const page = await ctx.newPage();
+            try {
+              await page.goto(o.origin, { timeout: 15000, waitUntil: "domcontentloaded" });
+              for (const item of o.localStorage ?? []) {
+                try {
+                  await page.evaluate(({ name, value }) => {
+                    try {
+                      if (typeof window !== "undefined" && window.localStorage) {
+                        window.localStorage.setItem(name, value);
+                      }
+                    } catch {
+                      // ignore per-key storage errors (quota, sandboxing, security)
+                    }
+                  }, item);
+                } catch {
+                  // ignore evaluate failure
+                }
+              }
+            } finally {
+              await page.close().catch(() => {});
+            }
+          } catch {
+            // ignore per-origin failures so remaining origins still restore
           }
-          await page.close();
         }
       }
       await writeFile(args.filename + ".applied", new Date().toISOString());
