@@ -21,7 +21,8 @@ export function zodToJsonSchema(schema: ZodTypeAny): JsonSchema {
     const required: string[] = [];
     for (const [k, v] of Object.entries(shape)) {
       const inner = unwrap(v);
-      properties[k] = zodToJsonSchema(inner.type);
+      const base = zodToJsonSchema(inner.type);
+      properties[k] = inner.nullable ? { oneOf: [base, { type: "null" }] } : base;
       const desc = (v as unknown as { _def: { description?: string } })._def.description;
       if (desc) properties[k].description = desc;
       if (!inner.optional) required.push(k);
@@ -49,23 +50,31 @@ export function zodToJsonSchema(schema: ZodTypeAny): JsonSchema {
     return { type: "object", additionalProperties: true };
   }
   if (tn === "ZodAny" || tn === "ZodUnknown") return {};
-  if (tn === "ZodNullable" || tn === "ZodOptional") {
+  if (tn === "ZodNullable") {
+    const base = zodToJsonSchema((def as unknown as { innerType: ZodTypeAny }).innerType);
+    return { oneOf: [base, { type: "null" }] };
+  }
+  if (tn === "ZodOptional") {
     return zodToJsonSchema((def as unknown as { innerType: ZodTypeAny }).innerType);
   }
   return {};
 }
 
-function unwrap(schema: ZodTypeAny): { type: ZodTypeAny; optional: boolean } {
+function unwrap(schema: ZodTypeAny): { type: ZodTypeAny; optional: boolean; nullable: boolean } {
   let optional = false;
+  let nullable = false;
   let current = schema;
   while (true) {
     const tn = (current as unknown as { _def: { typeName: string } })._def.typeName;
-    if (tn === "ZodOptional" || tn === "ZodDefault" || tn === "ZodNullable") {
+    if (tn === "ZodOptional" || tn === "ZodDefault") {
       optional = true;
+      current = (current as unknown as { _def: { innerType: ZodTypeAny } })._def.innerType;
+    } else if (tn === "ZodNullable") {
+      nullable = true;
       current = (current as unknown as { _def: { innerType: ZodTypeAny } })._def.innerType;
     } else break;
   }
-  return { type: current, optional };
+  return { type: current, optional, nullable };
 }
 
 export const refOrSelector = z.string().describe("Element ref like e3 from a prior browser_snapshot, OR a raw Playwright selector (css=, xpath=, text=, role=).");

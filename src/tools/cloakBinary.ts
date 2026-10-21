@@ -5,7 +5,7 @@ import { textOutput } from "./types.js";
 export const cloakBinaryTools: ToolHandler[] = [
   {
     name: "cloak_binary_info",
-    description: "Report installed CloakBrowser binary version, platform, and cache path.",
+    description: "Report installed CloakBrowser binary version, tier (free or pro), platform, and cache path.",
     inputSchema: z.object({}),
     handler: async () => {
       const cb = (await import("cloakbrowser")) as unknown as { binaryInfo?: () => Record<string, unknown> };

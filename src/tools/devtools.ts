@@ -1,6 +1,7 @@
+import type { BrowserContext, Page } from "playwright-core";
 import { z } from "zod";
 import type { ToolHandler } from "./types.js";
-import { textOutput } from "./types.js";
+import { errorOutput, textOutput } from "./types.js";
 
 const highlightSchema = z.object({
   element: z.string().optional(),
@@ -21,6 +22,49 @@ const startTracingSchema = z.object({
   screenshots: z.boolean().optional(),
   snapshots: z.boolean().optional(),
 });
+
+const showActionsSchema = z.object({
+  duration: z.number().optional().describe("How long each action annotation stays on screen, in milliseconds. Defaults to 500."),
+  position: z
+    .enum(["top-left", "top", "top-right", "bottom-left", "bottom", "bottom-right"])
+    .optional()
+    .describe("Where to place the action title relative to the page. Defaults to top-right."),
+  cursor: z
+    .enum(["none", "pointer"])
+    .optional()
+    .describe('Cursor decoration for pointer actions. "pointer" (default) animates a mouse pointer between action points; "none" disables it.'),
+  style: z
+    .object({
+      point: z.string().optional().describe('CSS declarations for the marker on the action point, e.g. "width: 20px; height: 20px; border-radius: 50%; background: red". Not shown when omitted.'),
+      highlight: z.string().optional().describe('CSS declarations for the box over the target element, e.g. "outline: 2px solid #333". Not shown when omitted.'),
+      title: z.string().optional().describe('CSS declarations for the action title, e.g. "font-size: 16px".'),
+    })
+    .strict()
+    .optional()
+    .describe("Styles of the action decorations."),
+});
+
+// BrowserContext._startRecording / _stopRecording are not in Playwright's public typings; Playwright's own MCP
+// server uses them the same way, so call them only when present.
+type RecordingContext = BrowserContext & {
+  _startRecording?: (
+    options: { language: string },
+    callbacks: {
+      actionAdded: (page: Page, action: unknown, code: string) => void;
+      actionUpdated: (page: Page, action: unknown, code: string) => void;
+      signalAdded: (page: Page, signal: unknown, code: string) => void;
+    },
+  ) => Promise<void>;
+  _stopRecording?: () => Promise<void>;
+};
+const recordingState = { actions: undefined as string[] | undefined };
+
+function dedent(code: string): string {
+  const lines = code.split("\n");
+  const indents = lines.filter((l) => l.trim()).map((l) => l.length - l.trimStart().length);
+  const cut = indents.length ? Math.min(...indents) : 0;
+  return lines.map((l) => l.slice(cut)).join("\n").trim();
+}
 
 const startVideoSchema = z.object({
   filename: z.string().optional(),
@@ -138,6 +182,79 @@ export const devtoolsTools: ToolHandler[] = [
         .object({ title: z.string(), description: z.string().optional(), duration: z.number().optional() })
         .parse(raw);
       return textOutput(`Chapter mark: ${args.title}${args.description ? ` — ${args.description}` : ""}`);
+    },
+  },
+  {
+    name: "browser_video_show_actions",
+    description:
+      "Annotate subsequent actions performed on the page with a callout that names the action and, when styled, marks the action point and highlights the target element. Useful while video recording or screencasting.",
+    capability: "devtools",
+    inputSchema: showActionsSchema,
+    handler: async (session, raw) => {
+      const args = showActionsSchema.parse(raw);
+      const options = Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined));
+      await session.activePage.screencast.showActions(options);
+      return textOutput("Action annotations enabled.");
+    },
+  },
+  {
+    name: "browser_video_hide_actions",
+    description: "Stop annotating actions performed on the page.",
+    capability: "devtools",
+    inputSchema: z.object({}),
+    handler: async (session) => {
+      await session.activePage.screencast.hideActions();
+      return textOutput("Action annotations disabled.");
+    },
+  },
+  {
+    name: "browser_start_recording",
+    description:
+      "Start recording actions that the user performs in the browser as Playwright code. Use it when the user wants to demonstrate a flow manually. Call browser_stop_recording when the user says they are done to retrieve the recorded actions.",
+    capability: "devtools",
+    inputSchema: z.object({}),
+    handler: async (session) => {
+      await session.ensureBrowser();
+      const ctx = session.rawContext as RecordingContext | undefined;
+      if (!ctx) return errorOutput("No browser context is available.");
+      if (recordingState.actions) return errorOutput("Recording is already in progress.");
+      if (typeof ctx._startRecording !== "function" || typeof ctx._stopRecording !== "function") {
+        return errorOutput("Recording is not supported by the installed playwright-core; upgrade it.");
+      }
+      const actions: string[] = [];
+      await ctx._startRecording(
+        { language: "playwright-test" },
+        {
+          actionAdded: (_page, _action, code) => {
+            actions.push(code);
+          },
+          actionUpdated: (_page, _action, code) => {
+            if (actions.length) actions[actions.length - 1] = code;
+            else actions.push(code);
+          },
+          signalAdded: (_page, _signal, code) => {
+            if (actions.length && code) actions[actions.length - 1] = code;
+          },
+        },
+      );
+      recordingState.actions = actions;
+      await session.activePage.bringToFront();
+      return textOutput("Recording started. Call browser_stop_recording to retrieve the recorded actions.");
+    },
+  },
+  {
+    name: "browser_stop_recording",
+    description: "Stop the recording started with browser_start_recording and return the recorded actions as Playwright code.",
+    capability: "devtools",
+    inputSchema: z.object({}),
+    handler: async (session) => {
+      const recorded = recordingState.actions;
+      if (!recorded) return errorOutput("No recording in progress, use browser_start_recording to start one.");
+      recordingState.actions = undefined;
+      await (session.rawContext as RecordingContext | undefined)?._stopRecording?.();
+      const code = recorded.filter((c) => c.trim()).map(dedent);
+      if (!code.length) return textOutput("Recording stopped. No actions were recorded.");
+      return textOutput(`Recording stopped. Recorded actions:\n\n\`\`\`js\n${code.join("\n")}\n\`\`\``);
     },
   },
   {
