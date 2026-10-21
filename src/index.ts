@@ -2,6 +2,7 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { parseArgs } from "./config.js";
 import { createServer } from "./server.js";
+import { routeConsoleToStderr } from "./util/stdout-guard.js";
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 
 async function main(): Promise<void> {
@@ -21,6 +22,7 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
+  routeConsoleToStderr();
   const { server, session } = createServer(cfg);
   // McpServer exposes the underlying Server for transport.connect.
   const underlying = (server as unknown as { server: Server }).server;

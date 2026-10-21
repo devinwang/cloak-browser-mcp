@@ -47,6 +47,10 @@ When you don't need stealth, `@playwright/mcp` is faster and lighter — use tha
 
 The wrapper installs from npm; the CloakBrowser Chromium binary (~200 MB) downloads on first use into `~/.cloakbrowser/`.
 
+Requires Node.js `^20.19.0 || >=22.12.0` (the minimum CloakBrowser itself needs).
+
+The binary comes in two tiers. Without a key you get the free binary. Set `CLOAKBROWSER_LICENSE_KEY` in the MCP server's environment to use a CloakBrowser Pro license; `CLOAKBROWSER_RELEASE_CHANNEL` (`stable` or `preview`) and `CLOAKBROWSER_VERSION` are read by the CloakBrowser library too. See [cloakbrowser.dev](https://cloakbrowser.dev) for what each tier includes. `cloak_binary_info` reports the active tier.
+
 ```bash
 npm install -g @devinwangd/cloak-browser-mcp
 ```
@@ -483,6 +487,23 @@ For issues in upstream CloakBrowser: https://github.com/CloakHQ/CloakBrowser/sec
 ---
 
 ## Changelog
+
+### [0.2.0] - 2026-10-21
+
+- **Upgraded `cloakbrowser` from 0.3.x to 0.6.3.** The new releases add Pro licensing, release channels, and signed download verification. Nothing the server used was removed. No new MCP tools; the tool count stays at 80.
+- **Fix: library log lines could corrupt the stdio stream.** `cloakbrowser` reports some events (for example auto-encoding of special characters in proxy credentials) with `console.info`, which Node writes to stdout, where an MCP client expects only JSON-RPC. `console.log`, `console.info` and `console.debug` are now routed to stderr while the server runs.
+- **Node requirement is now `^20.19.0 || >=22.12.0`** (was declared as `>=18`). CloakBrowser 0.3.30 already required Node 20 or newer, and 0.6.x needs 20.19 or newer. CI no longer tests Node 18.
+- `playwright-core` minimum raised to `^1.53.0`, the floor CloakBrowser 0.6.x declares as its peer range. The resolved version is unchanged.
+- Added `mcpName` to `package.json` and a `server.json` for the official MCP Registry, including the optional `CLOAKBROWSER_LICENSE_KEY` variable.
+
+### [0.1.4] - 2026-08-23
+
+- **Fix: `browser_evaluate` without `target` always failed.** The function was passed to Playwright as a string expression, so the function object came back instead of its result, which serialized to `undefined` and failed MCP result validation. It is now invoked, and a function that legitimately returns `undefined` reports the string `"undefined"`.
+
+### [0.1.3] - 2026-08-23
+
+- **Fix: a failed browser launch could not be retried.** A rejected launch promise was cached and re-awaited forever, so one transient error forced a process restart. It is now cleared on failure.
+- **Clearer errors.** A stale CloakBrowser process holding the profile directory used to surface as "No active page". There is now a `NO_BROWSER` error (`BrowserNotLaunchedError`) that carries the underlying launch error and the command to find stale processes, and a `TAB_NOT_FOUND` error for an unknown tab id. `NoActivePageError` no longer tells the caller to run the call that is itself failing.
 
 ### [0.1.2] - 2026-08-03
 

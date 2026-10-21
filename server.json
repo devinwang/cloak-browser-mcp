@@ -1,0 +1,28 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.devinwang/cloak-browser-mcp",
+  "description": "Playwright-compatible MCP server on CloakBrowser stealth Chromium: 80 tools, humanized input.",
+  "repository": {
+    "url": "https://github.com/devinwang/cloak-browser-mcp",
+    "source": "github"
+  },
+  "version": "0.2.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@devinwangd/cloak-browser-mcp",
+      "version": "0.2.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "CLOAKBROWSER_LICENSE_KEY",
+          "description": "Optional CloakBrowser Pro license key. Leave unset to use the free binary.",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
