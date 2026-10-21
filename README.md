@@ -2,7 +2,7 @@
 
 A Model Context Protocol (MCP) server backed by [CloakHQ/CloakBrowser](https://github.com/CloakHQ/CloakBrowser) — a source-patched Chromium that passes Cloudflare Turnstile, reCAPTCHA v3, FingerprintJS, BrowserScan, and 30+ other bot detection services without runtime JS injection.
 
-Drop-in replacement for `@playwright/mcp` with **80 tools**: full Playwright-MCP parity plus a Cloak-exclusive stealth/profile/audit layer.
+Drop-in replacement for `@playwright/mcp` with **86 tools**: every Playwright MCP tool except `browser_annotate` (see [Not implemented](#not-implemented)), plus a Cloak-exclusive stealth/profile/audit layer.
 
 > Works with Claude Code, Cursor, VS Code, Codex, Gemini CLI, Windsurf, or any MCP client.
 
@@ -219,6 +219,8 @@ Tools are grouped by capability. The "always-on" sections are exposed regardless
 | Tool | Required | Optional | Notes |
 |---|---|---|---|
 | `browser_snapshot` | — | — | Accessibility tree with `[eN]` refs for interactable nodes. |
+| `browser_find` | `text` or `regex` | `filename` | Searches the snapshot instead of returning all of it. Each match is shown under its path from the root with a few lines of context, up to 20 matches. `regex` is case-sensitive unless written as `/pattern/i`. |
+| `browser_emulate_media` | — | `colorScheme`, `reducedMotion`, `forcedColors`, `contrast`, `media` | Omitted parameters are left unchanged; `null` clears an override back to the system setting. |
 | `browser_take_screenshot` | — | `element`, `target`, `type`, `fullPage`, `quality`, `saveAs` | Image is returned inline; optionally saved to disk. |
 | `browser_console_messages` | — | `level`, `limit` | Buffered console + pageerror. |
 | `browser_wait_for` | — | `timeMs`, `text`, `textGone`, `selector`, `state`, `timeoutMs` | |
@@ -255,11 +257,15 @@ Tools are grouped by capability. The "always-on" sections are exposed regardless
 
 **`--caps testing`** — `browser_verify_element_visible`, `browser_verify_text_visible`, `browser_verify_list_visible`, `browser_verify_value`, `browser_generate_locator`.
 
-**`--caps devtools`** — `browser_highlight`, `browser_hide_highlight`, `browser_start_tracing`, `browser_stop_tracing`, `browser_start_video`, `browser_stop_video`, `browser_video_chapter`, `browser_resume`.
+**`--caps devtools`** — `browser_highlight`, `browser_hide_highlight`, `browser_start_tracing`, `browser_stop_tracing`, `browser_start_video`, `browser_stop_video`, `browser_video_chapter`, `browser_resume`, `browser_video_show_actions`, `browser_video_hide_actions`, `browser_start_recording`, `browser_stop_recording`.
 
 **`--caps config`** — `browser_get_config`, `browser_close`, `browser_run_code_unsafe` (also needs `--enable-unsafe-eval`).
 
 **`--caps humanize`** — `cloak_humanize_set`.
+
+#### Not implemented
+
+`browser_annotate` from Playwright MCP is not provided. It opens Playwright's dashboard window and waits for a person to draw on the page, and Playwright runs that as an internal process that this server does not launch.
 
 ---
 
@@ -493,7 +499,14 @@ For issues in upstream CloakBrowser: https://github.com/CloakHQ/CloakBrowser/sec
 - **Upgraded `cloakbrowser` from 0.3.x to 0.6.3.** The new releases add Pro licensing, release channels, and signed download verification. Nothing the server used was removed. No new MCP tools; the tool count stays at 80.
 - **Fix: library log lines could corrupt the stdio stream.** `cloakbrowser` reports some events (for example auto-encoding of special characters in proxy credentials) with `console.info`, which Node writes to stdout, where an MCP client expects only JSON-RPC. `console.log`, `console.info` and `console.debug` are now routed to stderr while the server runs.
 - **Node requirement is now `^20.19.0 || >=22.12.0`** (was declared as `>=18`). CloakBrowser 0.3.30 already required Node 20 or newer, and 0.6.x needs 20.19 or newer. CI no longer tests Node 18.
-- `playwright-core` minimum raised to `^1.53.0`, the floor CloakBrowser 0.6.x declares as its peer range. The resolved version is unchanged.
+- **Six tools added for parity with Playwright MCP 0.0.83** (80 → 86):
+  - `browser_find` — search the snapshot for text or a regex.
+  - `browser_emulate_media` — color scheme, reduced motion, forced colors, contrast, media type. `null` clears an override.
+  - `browser_video_show_actions` / `browser_video_hide_actions` (devtools) — annotate actions on the page while recording or screencasting.
+  - `browser_start_recording` / `browser_stop_recording` (devtools) — record what the user does in the browser and return it as Playwright code.
+- `browser_annotate` is not provided: it launches Playwright's internal dashboard process and needs someone to draw on the page.
+- `playwright-core` minimum raised to `^1.61.0`, the first release with `page.screencast.showActions()`; the resolved version moves from 1.60.0 to 1.64.1.
+- Input schemas now advertise nullable parameters as `{ oneOf: [<type>, null] }` (the converter used to drop the null), which `browser_emulate_media` needs.
 - Added `mcpName` to `package.json` and a `server.json` for the official MCP Registry, including the optional `CLOAKBROWSER_LICENSE_KEY` variable.
 
 ### [0.1.4] - 2026-08-23

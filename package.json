@@ -2,7 +2,7 @@
   "name": "@devinwangd/cloak-browser-mcp",
   "version": "0.2.0",
   "mcpName": "io.github.devinwang/cloak-browser-mcp",
-  "description": "Model Context Protocol (MCP) server backed by CloakBrowser stealth Chromium. Drop-in replacement for @playwright/mcp with source-level fingerprint patches, humanized inputs, and persistent profiles. 80 tools across navigation, interaction, page state, network, storage, vision, PDF, testing, devtools, and CloakBrowser-exclusive stealth/profile management. Works with Claude Code, Cursor, VS Code, Codex, Gemini CLI, Windsurf, or any MCP client.",
+  "description": "Model Context Protocol (MCP) server backed by CloakBrowser stealth Chromium. Drop-in replacement for @playwright/mcp with source-level fingerprint patches, humanized inputs, and persistent profiles. 86 tools across navigation, interaction, page state, network, storage, vision, PDF, testing, devtools, and CloakBrowser-exclusive stealth/profile management. Works with Claude Code, Cursor, VS Code, Codex, Gemini CLI, Windsurf, or any MCP client.",
   "keywords": [
     "mcp",
     "mcp-server",
@@ -70,7 +70,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
     "cloakbrowser": "^0.6.3",
-    "playwright-core": "^1.53.0",
+    "playwright-core": "^1.61.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

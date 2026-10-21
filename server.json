@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.devinwang/cloak-browser-mcp",
-  "description": "Playwright-compatible MCP server on CloakBrowser stealth Chromium: 80 tools, humanized input.",
+  "description": "Playwright-compatible MCP server on CloakBrowser stealth Chromium: 86 tools, humanized input.",
   "repository": {
     "url": "https://github.com/devinwang/cloak-browser-mcp",
     "source": "github"
